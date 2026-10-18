@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	ole "github.com/go-ole/go-ole"
+	ole "github.com/icarianflight/go-ole"
 )
 
 type stdDispatch struct {

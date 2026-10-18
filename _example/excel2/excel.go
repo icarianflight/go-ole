@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	ole "github.com/go-ole/go-ole"
-	"github.com/go-ole/go-ole/oleutil"
+	ole "github.com/icarianflight/go-ole"
+	"github.com/icarianflight/go-ole/oleutil"
 )
 
 func writeExample(excel, workbooks *ole.IDispatch, filepath string) {
