@@ -1,9 +1,5 @@
 # Go OLE
 
-[![Build status](https://ci.appveyor.com/api/projects/status/qr0u2sf7q43us9fj?svg=true)](https://ci.appveyor.com/project/jacobsantos/go-ole-jgs28)
-[![Build Status](https://travis-ci.org/go-ole/go-ole.svg?branch=master)](https://travis-ci.org/go-ole/go-ole)
-[![GoDoc](https://godoc.org/github.com/go-ole/go-ole?status.svg)](https://godoc.org/github.com/go-ole/go-ole)
-
 Go bindings for Windows COM using shared libraries instead of cgo.
 
 By Yasuhiro Matsumoto.
@@ -17,7 +13,7 @@ go get github.com/icarianflight/go-ole
 cd /path/to/go-ole/
 go test
 
-cd /path/to/go-ole/example/excel
+cd /path/to/go-ole/_example/excel
 go run excel.go
 ```
 
@@ -48,17 +44,9 @@ The key to any solution is that you must call `CoUninitialize()` for every `CoIn
 
 ## Continuous Integration
 
-Continuous integration configuration has been added for both Travis-CI and AppVeyor. You will have to add these to your own account for your fork in order for it to run.
+Continuous integration runs on GitHub Actions (`.github/workflows/`). The amd64 and 386 test jobs each download the [test COM server](https://github.com/go-ole/test-com-server) (pinned to v1.0.2, the release matching these tests), register it with `RegAsm`, and then run `go build`, `go vet` and `go test` on the same Windows runner, with Go 1.27 and the current stable release. A separate job runs `go test -race` on amd64. arm64 is build and vet only, because arm64 binaries cannot run on the x64 runner. The library cannot be tested on Linux, since the COM API is specific to Windows.
 
-**Travis-CI**
-
-Travis-CI was added to check builds on Linux to ensure that `go get` works when cross building. Currently, Travis-CI is not used to test cross-building, but this may be changed in the future. It is also not currently possible to test the library on Linux, since COM API is specific to Windows and it is not currently possible to run a COM server on Linux or even connect to a remote COM server.
-
-**AppVeyor**
-
-AppVeyor is used to build on Windows using the (in-development) test COM server. It is currently only used to test the build and ensure that the code works on Windows. It will be used to register a COM server and then run the test cases based on the test COM server.
-
-The tests currently do run and do pass and this should be maintained with commits.
+A green run on all Windows test legs is the bar for every commit.
 
 ## Versioning
 
