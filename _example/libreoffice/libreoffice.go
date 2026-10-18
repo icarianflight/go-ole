@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 /*
 	Demonstrates basic LibreOffce (OpenOffice) automation with OLE using GO-OLE.

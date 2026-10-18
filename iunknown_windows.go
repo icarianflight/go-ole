@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -8,13 +8,12 @@ import (
 	"unsafe"
 )
 
-func reflectQueryInterface(self interface{}, method uintptr, interfaceID *GUID, obj interface{}) (err error) {
+func reflectQueryInterface(self any, method uintptr, interfaceID *GUID, obj any) (err error) {
 	selfValue := reflect.ValueOf(self).Elem()
 	objValue := reflect.ValueOf(obj).Elem()
 
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		method,
-		3,
 		selfValue.UnsafeAddr(),
 		uintptr(unsafe.Pointer(interfaceID)),
 		objValue.Addr().Pointer())
@@ -25,9 +24,8 @@ func reflectQueryInterface(self interface{}, method uintptr, interfaceID *GUID, 
 }
 
 func queryInterface(unk *IUnknown, iid *GUID) (disp *IDispatch, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		unk.VTable().QueryInterface,
-		3,
 		uintptr(unsafe.Pointer(unk)),
 		uintptr(unsafe.Pointer(iid)),
 		uintptr(unsafe.Pointer(&disp)))
@@ -38,21 +36,15 @@ func queryInterface(unk *IUnknown, iid *GUID) (disp *IDispatch, err error) {
 }
 
 func addRef(unk *IUnknown) int32 {
-	ret, _, _ := syscall.Syscall(
+	ret, _, _ := syscall.SyscallN(
 		unk.VTable().AddRef,
-		1,
-		uintptr(unsafe.Pointer(unk)),
-		0,
-		0)
+		uintptr(unsafe.Pointer(unk)))
 	return int32(ret)
 }
 
 func release(unk *IUnknown) int32 {
-	ret, _, _ := syscall.Syscall(
+	ret, _, _ := syscall.SyscallN(
 		unk.VTable().Release,
-		1,
-		uintptr(unsafe.Pointer(unk)),
-		0,
-		0)
+		uintptr(unsafe.Pointer(unk)))
 	return int32(ret)
 }

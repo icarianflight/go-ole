@@ -1,9 +1,8 @@
-// +build windows
+//go:build windows
 
 package ole
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -81,13 +80,13 @@ func TestSafeArrayConversionString(t *testing.T) {
 
 	totalElements, _ := conversion.TotalElements(0)
 	if totalElements != 13 {
-		t.Log(fmt.Sprintf("%d total elements does not equal 13\n", totalElements))
+		t.Logf("%d total elements does not equal 13\n", totalElements)
 		t.Fail()
 	}
 
 	versions := conversion.ToStringArray()
 	if len(versions) != 13 {
-		t.Log(fmt.Sprintf("%s\n", strings.Join(versions, ", ")))
+		t.Logf("%s\n", strings.Join(versions, ", "))
 		t.Fail()
 	}
 

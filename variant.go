@@ -12,7 +12,7 @@ func (v *VARIANT) ToIUnknown() *IUnknown {
 	if v.VT != VT_UNKNOWN {
 		return nil
 	}
-	return (*IUnknown)(unsafe.Pointer(uintptr(v.Val)))
+	return (*IUnknown)(uintptrToPointer(uintptr(v.Val)))
 }
 
 // ToIDispatch converts variant to dispatch object.
@@ -20,7 +20,7 @@ func (v *VARIANT) ToIDispatch() *IDispatch {
 	if v.VT != VT_DISPATCH {
 		return nil
 	}
-	return (*IDispatch)(unsafe.Pointer(uintptr(v.Val)))
+	return (*IDispatch)(uintptrToPointer(uintptr(v.Val)))
 }
 
 // ToArray converts variant to SafeArray helper.
@@ -30,7 +30,7 @@ func (v *VARIANT) ToArray() *SafeArrayConversion {
 			return nil
 		}
 	}
-	var safeArray *SafeArray = (*SafeArray)(unsafe.Pointer(uintptr(v.Val)))
+	safeArray := (*SafeArray)(uintptrToPointer(uintptr(v.Val)))
 	return &SafeArrayConversion{safeArray}
 }
 

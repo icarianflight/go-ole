@@ -1,4 +1,4 @@
-// +build windows,arm
+//go:build windows && arm
 
 package ole
 

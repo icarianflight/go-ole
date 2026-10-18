@@ -1,10 +1,8 @@
 //go:build windows
-// +build windows
 
 package ole
 
 import (
-	"reflect"
 	"syscall"
 	"unicode/utf8"
 	"unsafe"
@@ -46,7 +44,7 @@ func RoActivateInstance(clsid string) (ins *IInspectable, err error) {
 	defer DeleteHString(hClsid)
 
 	hr, _, _ := procRoActivateInstance.Call(
-		uintptr(unsafe.Pointer(hClsid)),
+		uintptr(hClsid),
 		uintptr(unsafe.Pointer(&ins)))
 	if hr != 0 {
 		err = NewError(hr)
@@ -62,7 +60,7 @@ func RoGetActivationFactory(clsid string, iid *GUID) (ins *IInspectable, err err
 	defer DeleteHString(hClsid)
 
 	hr, _, _ := procRoGetActivationFactory.Call(
-		uintptr(unsafe.Pointer(hClsid)),
+		uintptr(hClsid),
 		uintptr(unsafe.Pointer(iid)),
 		uintptr(unsafe.Pointer(&ins)))
 	if hr != 0 {
@@ -105,7 +103,6 @@ func (h HString) String() string {
 		uintptr(h),
 		uintptr(unsafe.Pointer(&u16len)))
 
-	u16hdr := reflect.SliceHeader{Data: u16buf, Len: int(u16len), Cap: int(u16len)}
-	u16 := *(*[]uint16)(unsafe.Pointer(&u16hdr))
+	u16 := unsafe.Slice((*uint16)(uintptrToPointer(u16buf)), u16len)
 	return syscall.UTF16ToString(u16)
 }

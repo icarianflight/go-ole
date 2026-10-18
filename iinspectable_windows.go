@@ -1,11 +1,10 @@
-// +build windows
+//go:build windows
 
 package ole
 
 import (
 	"bytes"
 	"encoding/binary"
-	"reflect"
 	"syscall"
 	"unsafe"
 )
@@ -13,9 +12,8 @@ import (
 func (v *IInspectable) GetIids() (iids []*GUID, err error) {
 	var count uint32
 	var array uintptr
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().GetIIds,
-		3,
 		uintptr(unsafe.Pointer(v)),
 		uintptr(unsafe.Pointer(&count)),
 		uintptr(unsafe.Pointer(&array)))
@@ -27,8 +25,7 @@ func (v *IInspectable) GetIids() (iids []*GUID, err error) {
 
 	iids = make([]*GUID, count)
 	byteCount := count * uint32(unsafe.Sizeof(GUID{}))
-	slicehdr := reflect.SliceHeader{Data: array, Len: int(byteCount), Cap: int(byteCount)}
-	byteSlice := *(*[]byte)(unsafe.Pointer(&slicehdr))
+	byteSlice := unsafe.Slice((*byte)(uintptrToPointer(array)), byteCount)
 	reader := bytes.NewReader(byteSlice)
 	for i := range iids {
 		guid := GUID{}
@@ -43,12 +40,10 @@ func (v *IInspectable) GetIids() (iids []*GUID, err error) {
 
 func (v *IInspectable) GetRuntimeClassName() (s string, err error) {
 	var hstring HString
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().GetRuntimeClassName,
-		2,
 		uintptr(unsafe.Pointer(v)),
-		uintptr(unsafe.Pointer(&hstring)),
-		0)
+		uintptr(unsafe.Pointer(&hstring)))
 	if hr != 0 {
 		err = NewError(hr)
 		return
@@ -59,12 +54,10 @@ func (v *IInspectable) GetRuntimeClassName() (s string, err error) {
 }
 
 func (v *IInspectable) GetTrustLevel() (level uint32, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().GetTrustLevel,
-		2,
 		uintptr(unsafe.Pointer(v)),
-		uintptr(unsafe.Pointer(&level)),
-		0)
+		uintptr(unsafe.Pointer(&level)))
 	if hr != 0 {
 		err = NewError(hr)
 	}

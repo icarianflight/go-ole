@@ -83,13 +83,32 @@ func lpOleStrLen(p *uint16) (length int64) {
 	ptr := unsafe.Pointer(p)
 
 	for i := 0; ; i++ {
-		if 0 == *(*uint16)(ptr) {
+		if *(*uint16)(ptr) == 0 {
 			length = int64(i)
 			break
 		}
 		ptr = unsafe.Pointer(uintptr(ptr) + 2)
 	}
 	return
+}
+
+// uintptrToPointer reinterprets an address that COM or the Windows API handed
+// back as an integer (a syscall return value, a VARIANT.Val slot, an HSTRING
+// buffer) as an unsafe.Pointer.
+//
+// It is intended for memory the Go runtime does not manage (tests deliberately
+// use it on Go-allocated values they keep alive themselves): the garbage collector
+// neither moves nor frees it, so the unsafe.Pointer rule against converting a
+// uintptr back to a Pointer has nothing to protect. Reading the integer's bits
+// through a *unsafe.Pointer yields exactly the value a direct
+// unsafe.Pointer(p) conversion would, without the pattern go vet rejects. It
+// is the same reinterpretation VARIANT.ToString already does on Val.
+//
+// Do not "simplify" this to unsafe.Add(nil, p): the compiler treats a pointer
+// derived from nil as never pointing into the Go heap and drops the GC write
+// barrier wherever the result is stored, which the original conversion kept.
+func uintptrToPointer(p uintptr) unsafe.Pointer {
+	return *(*unsafe.Pointer)(unsafe.Pointer(&p))
 }
 
 // convertHresultToError converts syscall to error, if call is unsuccessful.

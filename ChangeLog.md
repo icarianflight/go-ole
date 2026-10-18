@@ -1,3 +1,20 @@
+# icarianflight fork
+
+**Minimum supported version is now Go 1.27** (was Go 1.12). The module path is
+`github.com/icarianflight/go-ole`; the exported API and behaviour are unchanged
+from upstream go-ole master.
+
+ * Updated `golang.org/x/sys` to v0.49.0 (clears GO-2026-5024) and
+   `github.com/stretchr/testify` to v1.12.1.
+ * Converted all `// +build` constraints to `//go:build` form.
+ * `go vet` is now clean on all platforms: `reflect.SliceHeader` uses replaced
+   with `unsafe.Slice`, and uintptr-to-pointer conversions routed through a
+   vetted helper with identical generated code.
+ * Replaced deprecated `syscall.Syscall*` calls with `syscall.SyscallN`.
+ * Preserved pre-Go-1.22 `oleutil.ForEach` semantics (the shared `*VARIANT`
+   per iteration) against the loop-variable change, pinned by a test.
+ * GitHub Actions workflows updated to Go 1.27/stable and full-module coverage.
+
 # Version 1.x.x
 
 * **Add more test cases and reference new test COM server project.** (Placeholder for future additions)

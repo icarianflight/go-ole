@@ -1,4 +1,4 @@
-// +build !windows
+//go:build !windows
 
 package ole
 
@@ -197,7 +197,7 @@ func safeArrayPutElement(safearray *SafeArray, index int64, element uintptr) err
 // AKA: SafeArrayGetRecordInfo in Windows API.
 //
 // XXX: Must implement IRecordInfo interface for this to return.
-func safeArrayGetRecordInfo(safearray *SafeArray) (interface{}, error) {
+func safeArrayGetRecordInfo(safearray *SafeArray) (any, error) {
 	return nil, NewError(E_NOTIMPL)
 }
 
@@ -206,6 +206,6 @@ func safeArrayGetRecordInfo(safearray *SafeArray) (interface{}, error) {
 // AKA: SafeArraySetRecordInfo in Windows API.
 //
 // XXX: Must implement IRecordInfo interface for this to return.
-func safeArraySetRecordInfo(safearray *SafeArray, recordInfo interface{}) error {
+func safeArraySetRecordInfo(safearray *SafeArray, recordInfo any) error {
 	return NewError(E_NOTIMPL)
 }

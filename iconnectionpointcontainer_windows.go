@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -12,9 +12,8 @@ func (v *IConnectionPointContainer) EnumConnectionPoints(points interface{}) err
 }
 
 func (v *IConnectionPointContainer) FindConnectionPoint(iid *GUID, point **IConnectionPoint) (err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().FindConnectionPoint,
-		3,
 		uintptr(unsafe.Pointer(v)),
 		uintptr(unsafe.Pointer(iid)),
 		uintptr(unsafe.Pointer(point)))

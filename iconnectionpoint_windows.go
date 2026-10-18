@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -13,9 +13,8 @@ func (v *IConnectionPoint) GetConnectionInterface(piid **GUID) int32 {
 }
 
 func (v *IConnectionPoint) Advise(unknown *IUnknown) (cookie uint32, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().Advise,
-		3,
 		uintptr(unsafe.Pointer(v)),
 		uintptr(unsafe.Pointer(unknown)),
 		uintptr(unsafe.Pointer(&cookie)))
@@ -26,12 +25,10 @@ func (v *IConnectionPoint) Advise(unknown *IUnknown) (cookie uint32, err error) 
 }
 
 func (v *IConnectionPoint) Unadvise(cookie uint32) (err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		v.VTable().Unadvise,
-		2,
 		uintptr(unsafe.Pointer(v)),
-		uintptr(cookie),
-		0)
+		uintptr(cookie))
 	if hr != 0 {
 		err = NewError(hr)
 	}

@@ -115,7 +115,13 @@ func ForEach(disp *ole.IDispatch, f func(v *ole.VARIANT) error) error {
 	}
 	defer enum.Release()
 
-	for item, length, err := enum.Next(1); length > 0; item, length, err = enum.Next(1) {
+	// item is declared outside the loop on purpose: f has always been handed
+	// the same *VARIANT on every call, overwritten by each Next. A for-clause
+	// := would make it per-iteration (Go 1.22+) and change what a callback
+	// that retains the pointer observes.
+	var item ole.VARIANT
+	var length uint
+	for item, length, err = enum.Next(1); length > 0; item, length, err = enum.Next(1) {
 		if err != nil {
 			return err
 		}

@@ -1,11 +1,8 @@
-// +build windows
+//go:build windows
 
 package ole
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 func TestComSetupAndShutDown(t *testing.T) {
 	defer func() {
@@ -125,7 +122,7 @@ func TestClsidFromProgID_WindowsMediaNSSManager(t *testing.T) {
 	if err == nil {
 		if !IsEqualGUID(expected, actual) {
 			t.Log(err)
-			t.Log(fmt.Sprintf("Actual GUID: %+v\n", actual))
+			t.Logf("Actual GUID: %+v\n", actual)
 			t.Fail()
 		}
 	}
@@ -147,7 +144,7 @@ func TestClsidFromString_WindowsMediaNSSManager(t *testing.T) {
 
 	if !IsEqualGUID(expected, actual) {
 		t.Log(err)
-		t.Log(fmt.Sprintf("Actual GUID: %+v\n", actual))
+		t.Logf("Actual GUID: %+v\n", actual)
 		t.Fail()
 	}
 }
@@ -169,7 +166,7 @@ func TestCreateInstance_WindowsMediaNSSManager(t *testing.T) {
 	if err == nil {
 		if !IsEqualGUID(expected, actual) {
 			t.Log(err)
-			t.Log(fmt.Sprintf("Actual GUID: %+v\n", actual))
+			t.Logf("Actual GUID: %+v\n", actual)
 			t.Fail()
 		}
 

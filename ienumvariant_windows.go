@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -8,12 +8,10 @@ import (
 )
 
 func (enum *IEnumVARIANT) Clone() (cloned *IEnumVARIANT, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		enum.VTable().Clone,
-		2,
 		uintptr(unsafe.Pointer(enum)),
-		uintptr(unsafe.Pointer(&cloned)),
-		0)
+		uintptr(unsafe.Pointer(&cloned)))
 	if hr != 0 {
 		err = NewError(hr)
 	}
@@ -21,12 +19,9 @@ func (enum *IEnumVARIANT) Clone() (cloned *IEnumVARIANT, err error) {
 }
 
 func (enum *IEnumVARIANT) Reset() (err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		enum.VTable().Reset,
-		1,
-		uintptr(unsafe.Pointer(enum)),
-		0,
-		0)
+		uintptr(unsafe.Pointer(enum)))
 	if hr != 0 {
 		err = NewError(hr)
 	}
@@ -34,12 +29,10 @@ func (enum *IEnumVARIANT) Reset() (err error) {
 }
 
 func (enum *IEnumVARIANT) Skip(celt uint) (err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		enum.VTable().Skip,
-		2,
 		uintptr(unsafe.Pointer(enum)),
-		uintptr(celt),
-		0)
+		uintptr(celt))
 	if hr != 0 {
 		err = NewError(hr)
 	}
@@ -47,15 +40,12 @@ func (enum *IEnumVARIANT) Skip(celt uint) (err error) {
 }
 
 func (enum *IEnumVARIANT) Next(celt uint) (array VARIANT, length uint, err error) {
-	hr, _, _ := syscall.Syscall6(
+	hr, _, _ := syscall.SyscallN(
 		enum.VTable().Next,
-		4,
 		uintptr(unsafe.Pointer(enum)),
 		uintptr(celt),
 		uintptr(unsafe.Pointer(&array)),
-		uintptr(unsafe.Pointer(&length)),
-		0,
-		0)
+		uintptr(unsafe.Pointer(&length)))
 	if hr != 0 {
 		err = NewError(hr)
 	}

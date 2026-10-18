@@ -24,7 +24,7 @@ func NewErrorWithSubError(hr uintptr, description string, err error) *OleError {
 
 // Code is the HResult.
 func (v *OleError) Code() uintptr {
-	return uintptr(v.hr)
+	return v.hr
 }
 
 // String description, either manually set or format message with error code.

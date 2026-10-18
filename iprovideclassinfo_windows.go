@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -8,12 +8,10 @@ import (
 )
 
 func getClassInfo(disp *IProvideClassInfo) (tinfo *ITypeInfo, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		disp.VTable().GetClassInfo,
-		2,
 		uintptr(unsafe.Pointer(disp)),
-		uintptr(unsafe.Pointer(&tinfo)),
-		0)
+		uintptr(unsafe.Pointer(&tinfo)))
 	if hr != 0 {
 		err = NewError(hr)
 	}

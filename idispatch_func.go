@@ -1,4 +1,4 @@
-// +build !windows
+//go:build !windows
 
 package ole
 
@@ -14,6 +14,6 @@ func getTypeInfo(disp *IDispatch) (*ITypeInfo, error) {
 	return nil, NewError(E_NOTIMPL)
 }
 
-func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...interface{}) (*VARIANT, error) {
+func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...any) (*VARIANT, error) {
 	return nil, NewError(E_NOTIMPL)
 }

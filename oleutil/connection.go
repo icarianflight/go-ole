@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package oleutil
 
@@ -14,7 +13,7 @@ type stdDispatch struct {
 	lpVtbl  *stdDispatchVtbl
 	ref     int32
 	iid     *ole.GUID
-	iface   interface{}
+	iface   any
 	funcMap map[string]int32
 }
 

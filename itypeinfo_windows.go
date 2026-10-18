@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package ole
 
@@ -8,12 +8,10 @@ import (
 )
 
 func (v *ITypeInfo) GetTypeAttr() (tattr *TYPEATTR, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		uintptr(v.VTable().GetTypeAttr),
-		2,
 		uintptr(unsafe.Pointer(v)),
-		uintptr(unsafe.Pointer(&tattr)),
-		0)
+		uintptr(unsafe.Pointer(&tattr)))
 	if hr != 0 {
 		err = NewError(hr)
 	}

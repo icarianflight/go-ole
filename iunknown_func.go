@@ -1,8 +1,8 @@
-// +build !windows
+//go:build !windows
 
 package ole
 
-func reflectQueryInterface(self interface{}, method uintptr, interfaceID *GUID, obj interface{}) (err error) {
+func reflectQueryInterface(self any, method uintptr, interfaceID *GUID, obj any) (err error) {
 	return NewError(E_NOTIMPL)
 }
 

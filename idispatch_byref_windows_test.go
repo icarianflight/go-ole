@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package ole
 
@@ -22,10 +21,10 @@ import (
 // It lets the out-parameter marshaling in invoke be tested without a
 // registered COM server.
 func fakeInvoke(this, dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr uintptr) uintptr {
-	dp := (*DISPPARAMS)(unsafe.Pointer(pDispParams))
-	args := (*[1 << 10]VARIANT)(unsafe.Pointer(dp.rgvarg))[:dp.cArgs:dp.cArgs]
+	dp := (*DISPPARAMS)(uintptrToPointer(pDispParams))
+	args := unsafe.Slice((*VARIANT)(uintptrToPointer(dp.rgvarg)), dp.cArgs)
 	for i := range args {
-		p := unsafe.Pointer(uintptr(args[i].Val))
+		p := uintptrToPointer(uintptr(args[i].Val))
 		switch args[i].VT {
 		case VT_BOOL | VT_BYREF:
 			*(*int16)(p) = 1

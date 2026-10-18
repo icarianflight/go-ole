@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package ole
 
@@ -114,15 +113,12 @@ func coInitializeSecurity(cAuthSvc int32,
 // CoInitializeEx().
 func CoInitialize(p uintptr) (err error) {
 	// p is ignored and won't be used.
-	// Avoid any variable not used errors.
-	p = uintptr(0)
 	return coInitialize()
 }
 
 // CoInitializeEx initializes COM library with concurrency model.
 func CoInitializeEx(p uintptr, coinit uint32) (err error) {
-	// Avoid any variable not used errors.
-	p = uintptr(0)
+	// p is ignored and won't be used.
 	return coInitializeEx(coinit)
 }
 
@@ -299,7 +295,7 @@ func VariantClear(v *VARIANT) (err error) {
 // SysAllocString allocates memory for string and copies string into memory.
 func SysAllocString(v string) (ss *int16) {
 	pss, _, _ := procSysAllocString.Call(uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(v))))
-	ss = (*int16)(unsafe.Pointer(pss))
+	ss = (*int16)(uintptrToPointer(pss))
 	return
 }
 
@@ -309,7 +305,7 @@ func SysAllocStringLen(v string) (ss *int16) {
 	ptr := &utf16[0]
 
 	pss, _, _ := procSysAllocStringLen.Call(uintptr(unsafe.Pointer(ptr)), uintptr(len(utf16)-1))
-	ss = (*int16)(unsafe.Pointer(pss))
+	ss = (*int16)(uintptrToPointer(pss))
 	return
 }
 

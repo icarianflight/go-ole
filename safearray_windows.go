@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package ole
 
@@ -212,7 +211,7 @@ func safeArrayDestroyDescriptor(safearray *SafeArray) (err error) {
 // AKA: SafeArrayGetDim in Windows API.
 func safeArrayGetDim(safearray *SafeArray) (dimensions *uint32, err error) {
 	l, _, err := procSafeArrayGetDim.Call(uintptr(unsafe.Pointer(safearray)))
-	dimensions = (*uint32)(unsafe.Pointer(l))
+	dimensions = (*uint32)(uintptrToPointer(l))
 	return
 }
 
@@ -221,7 +220,7 @@ func safeArrayGetDim(safearray *SafeArray) (dimensions *uint32, err error) {
 // AKA: SafeArrayGetElemsize in Windows API.
 func safeArrayGetElementSize(safearray *SafeArray) (length *uint32, err error) {
 	l, _, err := procSafeArrayGetElemsize.Call(uintptr(unsafe.Pointer(safearray)))
-	length = (*uint32)(unsafe.Pointer(l))
+	length = (*uint32)(uintptrToPointer(l))
 	return
 }
 
@@ -327,7 +326,7 @@ func safeArrayPutElement(safearray *SafeArray, index int64, element uintptr) (er
 		procSafeArrayPutElement.Call(
 			uintptr(unsafe.Pointer(safearray)),
 			uintptr(unsafe.Pointer(&index)),
-			uintptr(unsafe.Pointer(element))))
+			element))
 	return
 }
 
@@ -336,7 +335,7 @@ func safeArrayPutElement(safearray *SafeArray, index int64, element uintptr) (er
 // AKA: SafeArrayGetRecordInfo in Windows API.
 //
 // XXX: Must implement IRecordInfo interface for this to return.
-func safeArrayGetRecordInfo(safearray *SafeArray) (recordInfo interface{}, err error) {
+func safeArrayGetRecordInfo(safearray *SafeArray) (recordInfo any, err error) {
 	err = convertHresultToError(
 		procSafeArrayGetRecordInfo.Call(
 			uintptr(unsafe.Pointer(safearray)),
@@ -349,7 +348,7 @@ func safeArrayGetRecordInfo(safearray *SafeArray) (recordInfo interface{}, err e
 // AKA: SafeArraySetRecordInfo in Windows API.
 //
 // XXX: Must implement IRecordInfo interface for this to return.
-func safeArraySetRecordInfo(safearray *SafeArray, recordInfo interface{}) (err error) {
+func safeArraySetRecordInfo(safearray *SafeArray, recordInfo any) (err error) {
 	err = convertHresultToError(
 		procSafeArraySetRecordInfo.Call(
 			uintptr(unsafe.Pointer(safearray)),

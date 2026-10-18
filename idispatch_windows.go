@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package ole
 
@@ -19,9 +18,8 @@ func getIDsOfName(disp *IDispatch, names []string) (dispid []int32, err error) {
 	}
 	dispid = make([]int32, len(names))
 	namelen := uint32(len(names))
-	hr, _, _ := syscall.Syscall6(
+	hr, _, _ := syscall.SyscallN(
 		disp.VTable().GetIDsOfNames,
-		6,
 		uintptr(unsafe.Pointer(disp)),
 		uintptr(unsafe.Pointer(IID_NULL)),
 		uintptr(unsafe.Pointer(&wnames[0])),
@@ -35,12 +33,10 @@ func getIDsOfName(disp *IDispatch, names []string) (dispid []int32, err error) {
 }
 
 func getTypeInfoCount(disp *IDispatch) (c uint32, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		disp.VTable().GetTypeInfoCount,
-		2,
 		uintptr(unsafe.Pointer(disp)),
-		uintptr(unsafe.Pointer(&c)),
-		0)
+		uintptr(unsafe.Pointer(&c)))
 	if hr != 0 {
 		err = NewError(hr)
 	}
@@ -48,9 +44,8 @@ func getTypeInfoCount(disp *IDispatch) (c uint32, err error) {
 }
 
 func getTypeInfo(disp *IDispatch) (tinfo *ITypeInfo, err error) {
-	hr, _, _ := syscall.Syscall(
+	hr, _, _ := syscall.SyscallN(
 		disp.VTable().GetTypeInfo,
-		3,
 		uintptr(unsafe.Pointer(disp)),
 		uintptr(GetUserDefaultLCID()),
 		uintptr(unsafe.Pointer(&tinfo)))
@@ -60,7 +55,7 @@ func getTypeInfo(disp *IDispatch) (tinfo *ITypeInfo, err error) {
 	return
 }
 
-func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...interface{}) (result *VARIANT, err error) {
+func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...any) (result *VARIANT, err error) {
 	var dispparams DISPPARAMS
 	// bstrOut holds one BSTR cell per *string parameter, indexed by parameter
 	// position (not rgvarg position, which is reversed). The server stores its
@@ -118,7 +113,7 @@ func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...interface{}
 			case *uint32:
 				vargs[n] = NewVariant(VT_UI4|VT_BYREF, int64(uintptr(unsafe.Pointer(v.(*uint32)))))
 			case int64:
-				vargs[n] = NewVariant(VT_I8, int64(v.(int64)))
+				vargs[n] = NewVariant(VT_I8, v.(int64))
 			case *int64:
 				vargs[n] = NewVariant(VT_I8|VT_BYREF, int64(uintptr(unsafe.Pointer(v.(*int64)))))
 			case uint64:
@@ -190,9 +185,8 @@ func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...interface{}
 	result = new(VARIANT)
 	var excepInfo EXCEPINFO
 	VariantInit(result)
-	hr, _, _ := syscall.Syscall9(
+	hr, _, _ := syscall.SyscallN(
 		disp.VTable().Invoke,
-		9,
 		uintptr(unsafe.Pointer(disp)),
 		uintptr(dispid),
 		uintptr(unsafe.Pointer(IID_NULL)),
@@ -210,7 +204,7 @@ func invoke(disp *IDispatch, dispid int32, dispatch int16, params ...interface{}
 	for i, varg := range vargs {
 		n := len(params) - i - 1
 		if varg.VT == VT_BSTR && varg.Val != 0 {
-			SysFreeString(((*int16)(unsafe.Pointer(uintptr(varg.Val)))))
+			SysFreeString((*int16)(uintptrToPointer(uintptr(varg.Val))))
 		}
 		if varg.VT == (VT_BSTR|VT_BYREF) && bstrOut != nil {
 			if out, ok := params[n].(*string); ok {
