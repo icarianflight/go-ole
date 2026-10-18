@@ -1,49 +1,50 @@
 name: Test 32-bit Architectures
 
-on: [pull_request, push, pull_request_target]
+on: [pull_request, push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  download:
+  test:
     runs-on: windows-latest
-    permissions:
-      contents: read
-    steps:
-      - name: 'Download COM Test Release'
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'go-ole/test-com-server'
-          latest: true
-          fileName: 'test-com-server-x86.zip'
-          out-file-path: 'test-com-server'
-          zipBall: true
-          extract: true
-      - name: 'Register Assembly'
-        run: 'c:\Windows\Microsoft.NET\Framework\v4.0.30319\RegAsm.exe /codebase /nologo ${{ github.workspace }}\test-com-server\x86\Release\TestCOMServer.dll'
-
-  build:
-    runs-on: windows-latest
-    needs: download
-    permissions:
-      contents: read
+    timeout-minutes: 15
     strategy:
       matrix:
         go: [ '1.27', 'stable' ]
-        arch: [ '386' ]
     env:
-      GOARCH: ${{ matrix.arch }}
+      GOARCH: '386'
     steps:
       - name: 'Checkout Project'
         uses: actions/checkout@v7
-      - name: Setup go
+      - name: 'Setup go'
         uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
       - name: 'Go Version'
         run: go version
-      - name: 'Go Get'
-        run: go get -v -t
+      # Pinned to v1.x: see test_x64.yml.
+      - name: 'Download COM Test Release'
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'go-ole/test-com-server'
+          tag: 'v1.0.2'
+          fileName: 'test-com-server-x86.zip'
+          out-file-path: 'test-com-server'
+          extract: true
+      # Registration must happen on the same runner that runs the tests.
+      - name: 'Register Assembly'
+        run: '& "$env:SystemRoot\Microsoft.NET\Framework\v4.0.30319\RegAsm.exe" /codebase /nologo "${{ github.workspace }}\test-com-server\x86\Release\TestCOMServer.dll"'
+      - name: 'Go Mod Download'
+        run: go mod download
       - name: 'Go Build'
         run: go build ./...
-      - name: Run tests
+      - name: 'Go Vet'
+        run: go vet ./...
+      - name: 'Run tests'
         run: go test -v -cover ./...

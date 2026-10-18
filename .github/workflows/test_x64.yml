@@ -1,50 +1,107 @@
 name: Test 64-bit Architectures
 
-on: [pull_request, push, pull_request_target]
+on: [pull_request, push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  download:
+  test:
     runs-on: windows-latest
-    permissions:
-      contents: read
-    steps:
-      - name: 'Download COM Test Release'
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'go-ole/test-com-server'
-          latest: true
-          fileName: 'test-com-server-x64.zip'
-          out-file-path: 'test-com-server'
-          zipBall: true
-          extract: true
-      - name: 'Register Assembly'
-        run: 'c:\Windows\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe /codebase /nologo ${{ github.workspace }}\test-com-server\x64\Release\TestCOMServer.dll'
-
-  build:
-    runs-on: windows-latest
-    needs: download
-    permissions:
-      contents: read
+    timeout-minutes: 15
     strategy:
       matrix:
         go: [ '1.27', 'stable' ]
-        arch: [ 'amd64', 'arm64' ]
-    #        arch: [ 'amd64', 'arm64', 'loong64', 'mips64', 'mips64le', 'ppc64', 'ppc64le', 'riscv64', 's390x' ]
     env:
-      GOARCH: ${{ matrix.arch }}
+      GOARCH: amd64
     steps:
       - name: 'Checkout Project'
         uses: actions/checkout@v7
-      - name: Setup go
+      - name: 'Setup go'
         uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
       - name: 'Go Version'
         run: go version
-      - name: 'Go Get'
-        run: go get -v -t
+      # The v1 test suite targets test-com-server v1.x (legacy .NET Framework
+      # assembly, registered with RegAsm). 'latest' is v2, which has different
+      # CLSIDs and asset names, so the tag is pinned.
+      - name: 'Download COM Test Release'
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'go-ole/test-com-server'
+          tag: 'v1.0.2'
+          fileName: 'test-com-server-x64.zip'
+          out-file-path: 'test-com-server'
+          extract: true
+      # Registration must happen on the same runner that runs the tests.
+      - name: 'Register Assembly'
+        run: '& "$env:SystemRoot\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe" /codebase /nologo "${{ github.workspace }}\test-com-server\x64\Release\TestCOMServer.dll"'
+      - name: 'Go Mod Download'
+        run: go mod download
       - name: 'Go Build'
         run: go build ./...
-      - name: Run tests
+      - name: 'Go Vet'
+        run: go vet ./...
+      - name: 'Run tests'
         run: go test -v -cover ./...
+
+  race:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      GOARCH: amd64
+      CGO_ENABLED: '1'
+    steps:
+      - name: 'Checkout Project'
+        uses: actions/checkout@v7
+      - name: 'Setup go'
+        uses: actions/setup-go@v7
+        with:
+          go-version: 'stable'
+          check-latest: true
+      - name: 'Verify C compiler (required by -race)'
+        run: gcc --version
+      - name: 'Download COM Test Release'
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'go-ole/test-com-server'
+          tag: 'v1.0.2'
+          fileName: 'test-com-server-x64.zip'
+          out-file-path: 'test-com-server'
+          extract: true
+      - name: 'Register Assembly'
+        run: '& "$env:SystemRoot\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe" /codebase /nologo "${{ github.workspace }}\test-com-server\x64\Release\TestCOMServer.dll"'
+      - name: 'Go Mod Download'
+        run: go mod download
+      - name: 'Run tests with race detector'
+        run: go test -race -count=1 ./...
+
+  # arm64 binaries cannot execute on the x64 runner: compile and vet only.
+  build-arm64:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        go: [ '1.27', 'stable' ]
+    env:
+      GOARCH: arm64
+    steps:
+      - name: 'Checkout Project'
+        uses: actions/checkout@v7
+      - name: 'Setup go'
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+      - name: 'Go Mod Download'
+        run: go mod download
+      - name: 'Go Build'
+        run: go build ./...
+      - name: 'Go Vet (also type-checks test files)'
+        run: go vet ./...
