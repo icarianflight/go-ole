@@ -1,8 +1,11 @@
-# icarianflight fork
+# Version 1.4.0 (icarianflight fork)
+
+First release of the fork. See the README's "About this fork" section for its
+relationship to upstream go-ole.
 
 **Minimum supported version is now Go 1.27** (was Go 1.12). The module path is
 `github.com/icarianflight/go-ole`; the exported API and behaviour are unchanged
-from upstream go-ole master.
+from upstream go-ole master (as of 28687b4, October 2026).
 
  * Updated `golang.org/x/sys` to v0.49.0 (clears GO-2026-5024) and
    `github.com/stretchr/testify` to v1.12.1.
@@ -14,6 +17,7 @@ from upstream go-ole master.
  * Preserved pre-Go-1.22 `oleutil.ForEach` semantics (the shared `*VARIANT`
    per iteration) against the loop-variable change, pinned by a test.
  * GitHub Actions workflows updated to Go 1.27/stable and full-module coverage.
+ * AppVeyor configuration removed; CI is GitHub Actions only.
 
 # Version 1.x.x
 

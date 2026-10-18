@@ -4,6 +4,14 @@ Go bindings for Windows COM using shared libraries instead of cgo.
 
 By Yasuhiro Matsumoto.
 
+## About this fork
+
+This is a maintenance fork of [go-ole/go-ole](https://github.com/go-ole/go-ole), created by Yasuhiro Matsumoto ([@mattn](https://github.com/mattn)) and maintained by Jacob Santos and the go-ole contributors. All credit for the library belongs to them. The original copyright and MIT licence are retained unchanged.
+
+The fork exists to keep a stable **v1** API building cleanly on current Go (1.27, vet-clean, updated dependencies), for use in our own projects. The exported API is unchanged from upstream go-ole master (as of 28687b4, October 2026). Upstream has a **v2** in development on its [`v2` branch](https://github.com/go-ole/go-ole/tree/v2), which introduces breaking changes (generics, type safety). If you're starting something new, please look there first. Fixes we make that apply upstream will be offered back to the original project.
+
+Module path: `github.com/icarianflight/go-ole`. See `ChangeLog.md` for what differs from upstream.
+
 ## Install
 
 To experiment with go-ole, you can just compile and run the example program:
