@@ -1,4 +1,7 @@
-//go:build windows
+//go:build windows && livecom
+
+// Live test: queries state of the host it runs on. Excluded unless built with
+// -tags livecom.
 
 package oleutil
 
@@ -13,8 +16,9 @@ import (
 
 // ForEach has always handed f the same *VARIANT on every call, overwritten by
 // each IEnumVARIANT::Next. A caller that retains the pointer depends on that,
-// so it is pinned here against the WMI process list.
-func TestForEach_PassesTheSameVariantToEveryCall(t *testing.T) {
+// so it is pinned here against the WMI process list. The non-live pin of the same
+// behaviour is TestForEach_PassesTheSameVariantToEveryCall.
+func TestForEach_PassesTheSameVariantToEveryCall_WMI(t *testing.T) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	require.NoError(t, ole.CoInitialize(0))
