@@ -193,7 +193,9 @@ func StringFromCLSID(clsid *GUID) (str string, err error) {
 	return
 }
 
-// IIDFromString returns GUID from program ID.
+// IIDFromString parses an interface ID string such as
+// "{00000000-0000-0000-C000-000000000046}" into a GUID. It does not look up
+// program IDs; see CLSIDFromProgID for that.
 func IIDFromString(progId string) (clsid *GUID, err error) {
 	var guid GUID
 	lpsz := uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(progId)))
@@ -275,12 +277,12 @@ func GetObject(programID string, bindOpts *BindOpts, iid *GUID) (unk *IUnknown, 
 }
 
 // VariantInit initializes variant.
+//
+// VariantInit returns void, so there is no result to inspect and the error is
+// always nil.
 func VariantInit(v *VARIANT) (err error) {
-	hr, _, _ := procVariantInit.Call(uintptr(unsafe.Pointer(v)))
-	if hr != 0 {
-		err = NewError(hr)
-	}
-	return
+	procVariantInit.Call(uintptr(unsafe.Pointer(v)))
+	return nil
 }
 
 // VariantClear clears value in Variant settings to VT_EMPTY.
@@ -310,12 +312,12 @@ func SysAllocStringLen(v string) (ss *int16) {
 }
 
 // SysFreeString frees string system memory. This must be called with SysAllocString.
+//
+// SysFreeString returns void, so there is no result to inspect and the error is
+// always nil.
 func SysFreeString(v *int16) (err error) {
-	hr, _, _ := procSysFreeString.Call(uintptr(unsafe.Pointer(v)))
-	if hr != 0 {
-		err = NewError(hr)
-	}
-	return
+	procSysFreeString.Call(uintptr(unsafe.Pointer(v)))
+	return nil
 }
 
 // SysStringLen is the length of the system allocated string.
@@ -367,18 +369,62 @@ func GetUserDefaultLCID() (lcid uint32) {
 	return
 }
 
+// winMsg is the native MSG structure. Msg, the exported type, has 32-bit
+// fields throughout and so only matches the 32-bit layout; on 64-bit Windows
+// MSG is 48 bytes with pointer-sized HWND, WPARAM and LPARAM.
+type winMsg struct {
+	Hwnd    uintptr
+	Message uint32
+	Wparam  uintptr
+	Lparam  uintptr
+	Time    uint32
+	Pt      Point
+}
+
 // GetMessage in message queue from runtime.
 //
 // This function appears to block. PeekMessage does not block.
+//
+// ret is the GetMessage result: non-zero for a message, 0 for WM_QUIT, -1 on
+// failure. err is only non-nil when ret is -1.
+//
+// Msg has 32-bit fields, so on 64-bit Windows Hwnd, Wparam and Lparam of the
+// message are truncated to their low 32 bits when copied into msg. The hwnd
+// filter is a uint32 and is sign-extended to a native handle, as Win32 handle
+// interop requires, so 0xFFFFFFFF is hWnd -1 (thread messages only). Window
+// handles are 32-bit significant, but a pointer-valued Wparam or Lparam is not
+// preserved.
 func GetMessage(msg *Msg, hwnd uint32, MsgFilterMin uint32, MsgFilterMax uint32) (ret int32, err error) {
-	r0, _, err := procGetMessageW.Call(uintptr(unsafe.Pointer(msg)), uintptr(hwnd), uintptr(MsgFilterMin), uintptr(MsgFilterMax))
+	var m winMsg
+	r0, _, callErr := procGetMessageW.Call(uintptr(unsafe.Pointer(&m)), uintptr(int32(hwnd)), uintptr(MsgFilterMin), uintptr(MsgFilterMax))
 	ret = int32(r0)
+	if ret == -1 {
+		err = callErr
+		return
+	}
+	msg.Hwnd = uint32(m.Hwnd)
+	msg.Message = m.Message
+	msg.Wparam = int32(m.Wparam)
+	msg.Lparam = int32(m.Lparam)
+	msg.Time = m.Time
+	msg.Pt = m.Pt
 	return
 }
 
 // DispatchMessage to window procedure.
+//
+// The window procedure's LRESULT is truncated to 32 bits. Hwnd and Lparam are
+// sign-extended and Wparam zero-extended into the native MSG.
 func DispatchMessage(msg *Msg) (ret int32) {
-	r0, _, _ := procDispatchMessageW.Call(uintptr(unsafe.Pointer(msg)))
+	m := winMsg{
+		Hwnd:    uintptr(int32(msg.Hwnd)),
+		Message: msg.Message,
+		Wparam:  uintptr(uint32(msg.Wparam)),
+		Lparam:  uintptr(int(msg.Lparam)),
+		Time:    msg.Time,
+		Pt:      msg.Pt,
+	}
+	r0, _, _ := procDispatchMessageW.Call(uintptr(unsafe.Pointer(&m)))
 	ret = int32(r0)
 	return
 }

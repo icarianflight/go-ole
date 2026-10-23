@@ -3,13 +3,15 @@
 package ole
 
 import (
-	"errors"
 	"unsafe"
 )
 
-var (
-	success = errors.New("The operation completed successfully.")
-)
+// safeArrayCreateFailed is the error for a SafeArrayCreate* call that returned
+// NULL. These functions have no HRESULT; NULL is their only failure signal, and
+// covers both invalid arguments and out-of-memory.
+func safeArrayCreateFailed(function string) error {
+	return NewErrorWithDescription(E_INVALIDARG, function+" returned NULL (invalid arguments or out of memory)")
+}
 
 var (
 	procSafeArrayAccessData        = modoleaut32.NewProc("SafeArrayAccessData")
@@ -118,12 +120,12 @@ func safeArrayCopyData(original *SafeArray, duplicate *SafeArray) (err error) {
 //
 // AKA: SafeArrayCreate in Windows API.
 func safeArrayCreate(variantType VT, dimensions uint32, bounds *SafeArrayBound) (safearray *SafeArray, err error) {
-	sa, _, err := procSafeArrayCreate.Call(
+	sa, _, _ := procSafeArrayCreate.Call(
 		uintptr(variantType),
 		uintptr(dimensions),
 		uintptr(unsafe.Pointer(bounds)))
-	if !(errors.Is(err, success) || err.Error() == success.Error()) { // errors.Is not working as expected
-		return nil, err
+	if sa == 0 {
+		return nil, safeArrayCreateFailed("SafeArrayCreate")
 	}
 	saPtr := (**uintptr)(unsafe.Pointer(&sa)) // create Pointer of SafeArray-Pointer to solve possible misuse of unsafe.Pointer warning
 	return (*SafeArray)(unsafe.Pointer(*saPtr)), nil
@@ -133,14 +135,14 @@ func safeArrayCreate(variantType VT, dimensions uint32, bounds *SafeArrayBound) 
 //
 // AKA: SafeArrayCreateEx in Windows API.
 func safeArrayCreateEx(variantType VT, dimensions uint32, bounds *SafeArrayBound, extra uintptr) (safearray *SafeArray, err error) {
-	sa, _, err := procSafeArrayCreateEx.Call(
+	sa, _, _ := procSafeArrayCreateEx.Call(
 		uintptr(variantType),
 		uintptr(dimensions),
 		uintptr(unsafe.Pointer(bounds)),
 		extra,
 	)
-	if !(errors.Is(err, success) || err.Error() == success.Error()) { // errors.Is not working as expected
-		return nil, err
+	if sa == 0 {
+		return nil, safeArrayCreateFailed("SafeArrayCreateEx")
 	}
 	saPtr := (**uintptr)(unsafe.Pointer(&sa)) // create Pointer of SafeArray-Pointer to solve possible misuse of unsafe.Pointer warning
 	return (*SafeArray)(unsafe.Pointer(*saPtr)), nil
@@ -150,13 +152,13 @@ func safeArrayCreateEx(variantType VT, dimensions uint32, bounds *SafeArrayBound
 //
 // AKA: SafeArrayCreateVector in Windows API.
 func safeArrayCreateVector(variantType VT, lowerBound int32, length uint32) (safearray *SafeArray, err error) {
-	sa, _, err := procSafeArrayCreateVector.Call(
+	sa, _, _ := procSafeArrayCreateVector.Call(
 		uintptr(variantType),
 		uintptr(lowerBound),
 		uintptr(length),
 	)
-	if !(errors.Is(err, success) || err.Error() == success.Error()) { // errors.Is not working as expected
-		return nil, err
+	if sa == 0 {
+		return nil, safeArrayCreateFailed("SafeArrayCreateVector")
 	}
 	saPtr := (**uintptr)(unsafe.Pointer(&sa)) // create Pointer of SafeArray-Pointer to solve possible misuse of unsafe.Pointer warning
 	return (*SafeArray)(unsafe.Pointer(*saPtr)), nil
@@ -166,14 +168,14 @@ func safeArrayCreateVector(variantType VT, lowerBound int32, length uint32) (saf
 //
 // AKA: SafeArrayCreateVectorEx in Windows API.
 func safeArrayCreateVectorEx(variantType VT, lowerBound int32, length uint32, extra uintptr) (safearray *SafeArray, err error) {
-	sa, _, err := procSafeArrayCreateVectorEx.Call(
+	sa, _, _ := procSafeArrayCreateVectorEx.Call(
 		uintptr(variantType),
 		uintptr(lowerBound),
 		uintptr(length),
 		extra,
 	)
-	if !(errors.Is(err, success) || err.Error() == success.Error()) { // errors.Is not working as expected
-		return nil, err
+	if sa == 0 {
+		return nil, safeArrayCreateFailed("SafeArrayCreateVectorEx")
 	}
 	saPtr := (**uintptr)(unsafe.Pointer(&sa)) // create Pointer of SafeArray-Pointer to solve possible misuse of unsafe.Pointer warning
 	return (*SafeArray)(unsafe.Pointer(*saPtr)), nil
@@ -208,20 +210,36 @@ func safeArrayDestroyDescriptor(safearray *SafeArray) (err error) {
 // SafeArrays may have multiple dimensions. Meaning, it could be
 // multidimensional array.
 //
+// SafeArrayGetDim returns a UINT and has no failure HRESULT; it returns 0 for
+// a NULL or invalid array. That is reported as E_INVALIDARG. The returned
+// pointer is never nil.
+//
 // AKA: SafeArrayGetDim in Windows API.
 func safeArrayGetDim(safearray *SafeArray) (dimensions *uint32, err error) {
-	l, _, err := procSafeArrayGetDim.Call(uintptr(unsafe.Pointer(safearray)))
-	dimensions = (*uint32)(uintptrToPointer(l))
-	return
+	l, _, _ := procSafeArrayGetDim.Call(uintptr(unsafe.Pointer(safearray)))
+	v := uint32(l)
+	if v == 0 {
+		return &v, NewError(E_INVALIDARG)
+	}
+	return &v, nil
 }
 
 // safeArrayGetElementSize is the element size in bytes.
 //
+// SafeArrayGetElemsize returns a UINT and has no failure HRESULT; it returns 0
+// for a NULL or invalid array, and also for a descriptor whose element size has
+// not been set yet (one from SafeArrayAllocDescriptor before cbElements is
+// filled in). That is reported as E_INVALIDARG. The returned pointer is never
+// nil.
+//
 // AKA: SafeArrayGetElemsize in Windows API.
 func safeArrayGetElementSize(safearray *SafeArray) (length *uint32, err error) {
-	l, _, err := procSafeArrayGetElemsize.Call(uintptr(unsafe.Pointer(safearray)))
-	length = (*uint32)(uintptrToPointer(l))
-	return
+	l, _, _ := procSafeArrayGetElemsize.Call(uintptr(unsafe.Pointer(safearray)))
+	v := uint32(l)
+	if v == 0 {
+		return &v, NewError(E_INVALIDARG)
+	}
+	return &v, nil
 }
 
 // safeArrayGetElement retrieves element at given index.
