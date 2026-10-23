@@ -1,4 +1,7 @@
-//go:build windows
+//go:build windows && livecom
+
+// Live test: queries state of the host it runs on. Excluded unless built with
+// -tags livecom.
 
 package ole
 

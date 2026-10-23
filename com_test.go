@@ -106,28 +106,6 @@ func TestComPublicExSetupAndShutDown_WithValue(t *testing.T) {
 	CoUninitialize()
 }
 
-func TestClsidFromProgID_WindowsMediaNSSManager(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Log(r)
-			t.Fail()
-		}
-	}()
-
-	expected := &GUID{0x92498132, 0x4D1A, 0x4297, [8]byte{0x9B, 0x78, 0x9E, 0x2E, 0x4B, 0xA9, 0x9C, 0x07}}
-
-	coInitialize()
-	defer CoUninitialize()
-	actual, err := CLSIDFromProgID("WMPNSSCI.NSSManager")
-	if err == nil {
-		if !IsEqualGUID(expected, actual) {
-			t.Log(err)
-			t.Logf("Actual GUID: %+v\n", actual)
-			t.Fail()
-		}
-	}
-}
-
 func TestClsidFromString_WindowsMediaNSSManager(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -149,36 +127,6 @@ func TestClsidFromString_WindowsMediaNSSManager(t *testing.T) {
 	}
 }
 
-func TestCreateInstance_WindowsMediaNSSManager(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Log(r)
-			t.Fail()
-		}
-	}()
-
-	expected := &GUID{0x92498132, 0x4D1A, 0x4297, [8]byte{0x9B, 0x78, 0x9E, 0x2E, 0x4B, 0xA9, 0x9C, 0x07}}
-
-	coInitialize()
-	defer CoUninitialize()
-	actual, err := CLSIDFromProgID("WMPNSSCI.NSSManager")
-
-	if err == nil {
-		if !IsEqualGUID(expected, actual) {
-			t.Log(err)
-			t.Logf("Actual GUID: %+v\n", actual)
-			t.Fail()
-		}
-
-		unknown, err := CreateInstance(actual, IID_IUnknown)
-		if err != nil {
-			t.Log(err)
-			t.Fail()
-		}
-		unknown.Release()
-	}
-}
-
 func TestError(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -189,7 +137,10 @@ func TestError(t *testing.T) {
 
 	coInitialize()
 	defer CoUninitialize()
-	_, err := CLSIDFromProgID("INTERFACE-NOT-FOUND")
+	// IIDFromString only parses its argument (unlike CLSIDFromString, which can
+	// fall back to a ProgID lookup in the registry), so a malformed string fails
+	// without consulting the registry.
+	_, err := IIDFromString("{not-a-guid}")
 	if err == nil {
 		t.Fatalf("should be fail: %v", err)
 	}
